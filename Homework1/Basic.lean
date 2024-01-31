@@ -30,7 +30,6 @@ theorem question_1 (hn : 2 ≤ n)(hx : 1 ≤ x) : x^n - 1 = (x - 1) * (∑ k in 
       · apply h₂
     _ = (x - 1) * x^n + (x - 1) * (∑ k in range n , x^k) := by
       rw [ih, ← Nat.mul_sub_left_distrib, Nat.mul_comm]
-       -- why is the hypothesis modified by once applying induction
     _ = (x - 1) * ((∑ k in range n , x^k) + x^n) := by rw [← Nat.mul_add, Nat.add_comm]
     _ = (x - 1) * (∑ k in range (succ n) , x^k) := by rw [Finset.sum_range_succ]
 
@@ -122,7 +121,6 @@ lemma computation_helper (hx : 1 ≤ x): x + (1 + (x ^ 2 - x)) = 1 + x^2 := by
   have h₂ : x ≤ x := by apply le_refl
   rw [← add_assoc, add_comm x 1, add_assoc, ← Nat.add_sub_assoc h₁, add_comm x (x^2), Nat.add_sub_assoc h₂, Nat.sub_self, add_zero]
 
-
 theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1) * (1 + ∑ k in range ((n - 1) / 2), x^(k + 1) * (x - 1)  ) := by
   rcases nodd with ⟨w, hn'⟩
   rw [hn']
@@ -132,7 +130,12 @@ theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1
   -- ask on zulip the difference on modifying the induction and clearing hypotheses
   clear hn'
   clear hn
-  induction' w, hw  using Nat.le_induction with w _hw ih
+  -- Simplify (2 * w + 1 - 1) / 2 to be w
+  rw [Nat.add_sub_assoc, Nat.sub_self, add_zero]
+  nth_rewrite 2 [mul_comm 2 w]
+  rw [Nat.mul_div_cancel]
+  repeat' linarith
+  induction' w, hw using Nat.le_induction with w _hw ih
   · simp
     rw [
       ← succ_eq_add_one 2, add_comm, Nat.mul_sub_left_distrib, ← sq, mul_one,
@@ -145,7 +148,11 @@ theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1
     · apply pow_le_pow_right hx
       linarith
     · exact hx
-  · sorry
+  · rw [mul_add 2, mul_one]
+    rw [Finset.sum_range_succ, ← add_assoc 1, add_comm _ (x ^ (w + 1) * (x - 1)), mul_add (x + 1), ← ih]
+    sorry
+
+
 
 
 theorem question_6 (hprime : Nat.Prime (2^n + 1))(nodd: Odd n): n = 1 := by sorry
