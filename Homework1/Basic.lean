@@ -112,7 +112,7 @@ theorem question_4 (hn: 2 ≤ n): Nat.Prime (2^n - 1) → Nat.Prime n := by
   have a1 : 1 < a := by linarith
   apply question_3 a1 b1 neqamulb
 
-lemma computation_helper (hx : 1 ≤ x): x + (1 + (x ^ 2 - x)) = 1 + x^2 := by
+lemma computation_helper_q5 (hx : 1 ≤ x): x + (1 + (x ^ 2 - x)) = 1 + x^2 := by
   have h₁ : x ≤ x^2 := by
     rw [sq]
     nth_rewrite 1 [← one_mul x]
@@ -141,7 +141,7 @@ theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1
       ← succ_eq_add_one 2, add_comm, Nat.mul_sub_left_distrib, ← sq, mul_one,
       add_mul, one_mul, mul_add, Nat.mul_sub_left_distrib, add_assoc,
       ← sq, ← Nat.pow_succ', add_comm (x^(succ 2) - x^2), mul_one, ← add_assoc,
-      computation_helper, ← Nat.add_sub_assoc, add_assoc, add_comm (x^2), ← add_assoc,
+      computation_helper_q5, ← Nat.add_sub_assoc, add_assoc, add_comm (x^2), ← add_assoc,
       Nat.add_sub_assoc, Nat.sub_self, add_zero
       ]
     · exact le_refl (x^2)
@@ -152,11 +152,89 @@ theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1
     rw [Finset.sum_range_succ, ← add_assoc 1, add_comm _ (x ^ (w + 1) * (x - 1)), mul_add (x + 1), ← ih]
     sorry
 
+lemma computation_helper_q6 : 2*w + 1 = 1 ↔ w = 0 := by
+  constructor
+  · intro h
+    nth_rewrite 2 [← zero_add 1] at h
+    have h₁ : 2*w  = 0 := by rw [add_right_cancel h]
+    cases Nat.mul_eq_zero.mp h₁
+    case inl h' => contradiction
+    case inr h' => exact h'
+  · intro h
+    rw [h, mul_zero, zero_add]
 
 
+theorem question_6 (hprime : Nat.Prime (2^n + 1))(nodd: Odd n): n = 1 := by
+  by_contra h
+  rcases nodd with ⟨w, hn'⟩
+  have hw' : 0 < w := by
+    rw [hn', computation_helper_q6, ← ne_eq, ← zero_lt_iff] at h
+    exact h
+  have hn : 2 ≤ n := by
+    rw [hn']
+    nth_rewrite 1 [← one_add_one_eq_two]
+    apply add_le_add_right
+    apply one_le_mul
+    repeat' linarith
+  have hnotprime : ¬ (Nat.Prime (2^n + 1)) := by
+    rw [question_5 ⟨w, hn'⟩ _  hn]
+    apply not_prime_mul
+    · linarith
+    · nth_rewrite 1 [← add_zero 1]
+      apply add_lt_add_of_le_of_lt
+      apply le_refl
+      rw [hn']; simp
+      apply Finset.sum_pos'
+      · intro _i _imem
+        apply le_trans (b := 1)
+        · linarith
+        · apply one_le_pow
+          linarith
+      · use 0
+        constructor
+        · simp; exact hw'
+        · apply pow_pos; linarith
+    · linarith
+  contradiction
 
-theorem question_6 (hprime : Nat.Prime (2^n + 1))(nodd: Odd n): n = 1 := by sorry
 
-theorem question_7 (hprime : Nat.Prime (2^n + 1))(qodd: Odd q) : ¬ (q ∣ n) := by sorry
+theorem question_7 (hn : 2 ≤ n)(hq: 2 ≤ q)(hprime : Nat.Prime (2^n + 1))(qodd: Odd q) : ¬ (q ∣ n) := by
+  by_contra h
+  rcases h with ⟨w, hn'⟩
+  have h₁ : 1 ≤ 2^w := by apply one_le_pow; linarith
+  have hnotprime : ¬ (Nat.Prime (2^n + 1)) := by
+    rw [hn', pow_mul', question_5 qodd h₁ hq]
+    have h₃ : 1 < (2 ^ w + 1) := by
+      nth_rewrite 1 [← zero_add 1]
+      apply add_lt_add_right
+      apply pow_pos; linarith
+    have h₄ : 1 < 1 + ∑ k in range ((q - 1) / 2), (2 ^ w) ^ (k + 1) * (2 ^ w - 1) := by
+      rcases qodd with ⟨l, hq'⟩
+      nth_rewrite 1 [← add_zero 1]
+      apply add_lt_add_left
+      rw [hq']; simp
+      apply Finset.sum_pos'
+      · intro i hi
+        rw [mul_comm, mul_nonneg_iff_of_pos_right]
+        · apply le_sub_of_add_le
+          apply one_le_pow; linarith
+        · apply pow_pos
+          apply pow_pos
+          linarith
+      · use 1
+        constructor
+        · simp
+          sorry
+        · apply mul_pos
+          · apply pow_pos
+            apply pow_pos
+            linarith
+          · apply lt_sub_of_add_lt
+            apply Nat.one_lt_pow
+            · sorry
+            · linarith
+    apply not_prime_mul h₃ h₄
+  absurd hnotprime hprime
+  trivial
 
 theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by sorry
