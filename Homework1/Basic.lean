@@ -201,40 +201,48 @@ theorem question_6 (hprime : Nat.Prime (2^n + 1))(nodd: Odd n): n = 1 := by
 theorem question_7 (hn : 2 ≤ n)(hq: 2 ≤ q)(hprime : Nat.Prime (2^n + 1))(qodd: Odd q) : ¬ (q ∣ n) := by
   by_contra h
   rcases h with ⟨w, hn'⟩
+  rcases qodd with ⟨m, hq'⟩
+  have h₀ : w ≠ 0 := by
+    apply Nat.ne_zero_of_mul_ne_zero_right (n := q)
+    rw [← zero_lt_iff]
+    linarith
   have h₁ : 1 ≤ 2^w := by apply one_le_pow; linarith
-  have hnotprime : ¬ (Nat.Prime (2^n + 1)) := by
-    rw [hn', pow_mul', question_5 qodd h₁ hq]
-    have h₃ : 1 < (2 ^ w + 1) := by
+  have h₂ : 1 ≤ m := by
+    rw [hq'] at hq
+    linarith [hq]
+  have h₃ : 1 < (2 ^ w + 1) := by
       nth_rewrite 1 [← zero_add 1]
       apply add_lt_add_right
       apply pow_pos; linarith
-    have h₄ : 1 < 1 + ∑ k in range ((q - 1) / 2), (2 ^ w) ^ (k + 1) * (2 ^ w - 1) := by
-      rcases qodd with ⟨l, hq'⟩
+  have h₄ : 1 < 1 + ∑ k in range ((q - 1) / 2), (2 ^ w) ^ (k + 1) * (2 ^ w - 1) := by
       nth_rewrite 1 [← add_zero 1]
       apply add_lt_add_left
       rw [hq']; simp
       apply Finset.sum_pos'
-      · intro i hi
+      · intro i _hi
         rw [mul_comm, mul_nonneg_iff_of_pos_right]
         · apply le_sub_of_add_le
           apply one_le_pow; linarith
         · apply pow_pos
           apply pow_pos
           linarith
-      · use 1
+      · use 0
         constructor
         · simp
-          sorry
+          exact h₂
         · apply mul_pos
           · apply pow_pos
             apply pow_pos
             linarith
           · apply lt_sub_of_add_lt
             apply Nat.one_lt_pow
-            · sorry
+            · exact h₀
             · linarith
+  have hnotprime : ¬ (Nat.Prime (2^n + 1)) := by
+    rw [hn', pow_mul', question_5 ⟨m, hq'⟩ h₁ hq]
     apply not_prime_mul h₃ h₄
   absurd hnotprime hprime
   trivial
 
 theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by sorry
+  --Odd.ne_two_of_dvd_nat
