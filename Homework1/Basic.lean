@@ -11,13 +11,15 @@ open BigOperators
 
 variable {a b x q n : ℕ}
 
+lemma difference_of_squares : x^2 - 1 = (x - 1)*(x + 1) := by
+  rw [Nat.mul_sub_right_distrib, mul_comm 1]
+  nth_rewrite 1 [add_mul]
+  rw [← tsub_tsub, ← Nat.mul_sub_left_distrib, Nat.add_sub_assoc, Nat.sub_self, add_zero, sq, one_mul]
+  apply le_refl
+
 theorem question_1 (hn : 2 ≤ n)(hx : 1 ≤ x) : x^n - 1 = (x - 1) * (∑ k in range n , x^k) := by
   induction' n, hn using Nat.le_induction with n _hn ih
-  · simp
-    rw [Nat.mul_sub_right_distrib, mul_comm 1]
-    nth_rewrite 1 [add_mul]
-    rw [← tsub_tsub, ← Nat.mul_sub_left_distrib, Nat.add_sub_assoc, Nat.sub_self, add_zero, sq, one_mul]
-    apply le_refl
+  · simp; rw [difference_of_squares]
   have h₁ : 1 ≤ 1 := by exact le_refl 1
   have h₂ : 1 ≤ x^n := by apply one_le_pow; linarith [hx]
   rw [← succ_eq_add_one]
@@ -121,13 +123,16 @@ lemma computation_helper_q5 (hx : 1 ≤ x): x + (1 + (x ^ 2 - x)) = 1 + x^2 := b
   have h₂ : x ≤ x := by apply le_refl
   rw [← add_assoc, add_comm x 1, add_assoc, ← Nat.add_sub_assoc h₁, add_comm x (x^2), Nat.add_sub_assoc h₂, Nat.sub_self, add_zero]
 
-theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1) * (1 + ∑ k in range ((n - 1) / 2), x^(k + 1) * (x - 1)  ) := by
+theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1) * (1 + ∑ k in range ((n - 1) / 2), x^(2*k + 1) * (x - 1)  ) := by
   rcases nodd with ⟨w, hn'⟩
   rw [hn']
+  have hx' : 1 ≤ x^2 := by
+    rw [← one_mul 1, sq]
+    apply mul_le_mul'
+    repeat' exact hx
   have hw : 1 ≤ w := by
     rw [hn'] at hn
     linarith
-  -- ask on zulip the difference on modifying the induction and clearing hypotheses
   clear hn'
   clear hn
   -- Simplify (2 * w + 1 - 1) / 2 to be w
@@ -148,9 +153,21 @@ theorem question_5 (nodd : Odd n)(hx : 1 ≤ x)(hn : 2 ≤ n) : x^n + 1 = (x + 1
     · apply pow_le_pow_right hx
       linarith
     · exact hx
+    -- Modify LHS
   · rw [mul_add 2, mul_one]
-    rw [Finset.sum_range_succ, ← add_assoc 1, add_comm _ (x ^ (w + 1) * (x - 1)), mul_add (x + 1), ← ih]
-    sorry
+    -- Modify RHS
+    rw [
+      Finset.sum_range_succ, ← add_assoc 1, mul_add (x + 1), ← ih,
+      mul_comm (x + 1), mul_assoc, ← difference_of_squares, add_assoc _ 1, add_comm 1,
+      ← add_assoc]
+    nth_rewrite 1 [← mul_one (x^(2*w + 1))]
+    rw [
+      ← mul_add, ← Nat.add_sub_assoc, add_comm 1, Nat.add_sub_assoc, Nat.sub_self,
+      add_zero,← pow_add, add_assoc (2*w) 1 2 ,add_comm 1 2, ← add_assoc
+      ]
+    · linarith
+    · exact hx'
+
 
 lemma computation_helper_q6 : 2*w + 1 = 1 ↔ w = 0 := by
   constructor
@@ -214,7 +231,7 @@ theorem question_7 (hn : 2 ≤ n)(hq: 2 ≤ q)(hprime : Nat.Prime (2^n + 1))(qod
       nth_rewrite 1 [← zero_add 1]
       apply add_lt_add_right
       apply pow_pos; linarith
-  have h₄ : 1 < 1 + ∑ k in range ((q - 1) / 2), (2 ^ w) ^ (k + 1) * (2 ^ w - 1) := by
+  have h₄ : 1 < 1 + ∑ k in range ((q - 1) / 2), (2 ^ w) ^ (2*k + 1) * (2 ^ w - 1) := by
       nth_rewrite 1 [← add_zero 1]
       apply add_lt_add_left
       rw [hq']; simp
@@ -246,3 +263,5 @@ theorem question_7 (hn : 2 ≤ n)(hq: 2 ≤ q)(hprime : Nat.Prime (2^n + 1))(qod
 
 theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by sorry
   --Odd.ne_two_of_dvd_nat
+
+-- theorem Riemann_Rearrangement_Theorem (r : ℝ)(s : ℕ → ℝ) : (0 : ℝ) < r := by sorry
