@@ -1,7 +1,9 @@
 import Mathlib.Data.Nat.Factorization.Basic
 import Mathlib.Data.Nat.Prime
+import Mathlib.Data.Nat.PrimeFin
 import Mathlib.Algebra.BigOperators.Basic
 import Mathlib.Algebra.Group.Basic
+
 
 open Nat
 
@@ -261,7 +263,75 @@ theorem question_7 (hn : 2 ≤ n)(hq: 2 ≤ q)(hprime : Nat.Prime (2^n + 1))(qod
   absurd hnotprime hprime
   trivial
 
-theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by sorry
-  --Odd.ne_two_of_dvd_nat
+theorem two_le {m : ℕ} (h0 : m ≠ 0) (h1 : m ≠ 1) : 2 ≤ m := by
+  cases m; contradiction
+  case succ m =>
+    cases m; contradiction
+    repeat' apply Nat.succ_le_succ
+    apply Nat.zero_le
 
--- theorem Riemann_Rearrangement_Theorem (r : ℝ)(s : ℕ → ℝ) : (0 : ℝ) < r := by sorry
+theorem exists_prime_factor {n : Nat} (h : 2 ≤ n) : ∃ p : Nat, p.Prime ∧ p ∣ n := by
+  by_cases np : n.Prime
+  · use n, np
+  induction' n using Nat.strong_induction_on with n ih
+  rw [Nat.prime_def_lt] at np
+  push_neg at np
+  rcases np h with ⟨m, mltn, mdvdn, mne1⟩
+  have : m ≠ 0 := by
+    intro mz
+    rw [mz, zero_dvd_iff] at mdvdn
+    linarith
+  have mgt2 : 2 ≤ m := two_le this mne1
+  by_cases mp : m.Prime
+  · use m, mp
+  . rcases ih m mltn mgt2 mp with ⟨p, pp, pdvd⟩
+    use p, pp
+    apply pdvd.trans mdvdn
+
+lemma intermediate (hn : 2 ≤ n): (∃ q, Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^m) := by
+  have nnezero: n ≠ 0 := by linarith
+  have ngt1 : 1 < n := by linarith
+  by_cases h : ∃ p ∈ Nat.primeFactors n, Odd p
+  · left
+    rcases h with ⟨q, qprimefac , qodd⟩
+    rw [Nat.mem_primeFactors] at qprimefac
+    rcases qprimefac with ⟨qprime, qdvdn, neqzero⟩
+    exact ⟨q, qodd, qdvdn⟩
+  · right
+    push_neg at h
+    simp only [← Nat.even_iff_not_odd] at h
+    have h' : ∀ p ∈ n.primeFactors, p = 2 := by
+      intro p hp
+      have evenp : Even p := h _ hp
+      rw [mem_primeFactors] at hp
+      rw [← Nat.Prime.even_iff hp.1]
+      exact evenp
+
+    have factorseq2 : {2} = n.primeFactors := by
+      ext r; constructor
+      · intro hr; rw [mem_singleton] at hr
+        rcases nonempty_primeFactors.mpr ngt1 with ⟨p, hp⟩
+        rw [hr, ← h' p hp]
+        exact hp
+      · intro hr
+        rw [mem_singleton]
+        exact h' _ hr
+    -- apply factorization_prod_pow_eq_self
+    rcases n.factorization with ⟨prime_factors, multiplicity, h'⟩
+    use multiplicity 2
+    rw [← factorization_prod_pow_eq_self nnezero]
+    -- rw [Finsupp.onFinset_prod]
+    sorry
+
+    -- Nat.mem_primeFactors_of_ne_zero nnezero
+    -- []
+    -- rcases exists_prime_factor hn with ⟨q, hq⟩
+    -- have : Even q := by apply h _ hq
+
+theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by
+  have even_or_odd := Nat.even_or_odd'
+  specialize even_or_odd n
+  rcases even_or_odd with ⟨w, h⟩
+  cases h
+  case inl h => sorry
+  case inr h => sorry
