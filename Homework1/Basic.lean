@@ -288,7 +288,7 @@ theorem exists_prime_factor {n : Nat} (h : 2 ≤ n) : ∃ p : Nat, p.Prime ∧ p
     use p, pp
     apply pdvd.trans mdvdn
 
-lemma intermediate (hn : 2 ≤ n): (∃ q, Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^m) := by
+lemma exists_odd_factor_or_is_power_of_two (hn : 2 ≤ n): (∃ q, Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^m) := by
   have nnezero: n ≠ 0 := by linarith
   have ngt1 : 1 < n := by linarith
   by_cases h : ∃ p ∈ Nat.primeFactors n, Odd p
@@ -328,10 +328,9 @@ lemma intermediate (hn : 2 ≤ n): (∃ q, Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^
     -- rcases exists_prime_factor hn with ⟨q, hq⟩
     -- have : Even q := by apply h _ hq
 
-theorem question_8 (hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by
-  have even_or_odd := Nat.even_or_odd'
-  specialize even_or_odd n
-  rcases even_or_odd with ⟨w, h⟩
-  cases h
+theorem question_8 (hn : 2 ≤ n)(hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by
+  cases exists_odd_factor_or_is_power_of_two hn
   case inl h => sorry
-  case inr h => sorry
+    -- rcases h with ⟨q, qodd, qdvdn⟩
+    -- have pnotprime : ¬ (Nat.Prime 2^n + 1) := by
+  case inr h => exact h
