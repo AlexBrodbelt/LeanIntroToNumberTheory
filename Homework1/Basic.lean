@@ -288,15 +288,15 @@ theorem exists_prime_factor {n : Nat} (h : 2 ≤ n) : ∃ p : Nat, p.Prime ∧ p
     use p, pp
     apply pdvd.trans mdvdn
 
-lemma exists_odd_factor_or_is_power_of_two (hn : 2 ≤ n): (∃ q, Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^m) := by
+lemma exists_odd_factor_or_is_power_of_two (hn : 2 ≤ n): (∃ q, 2 ≤ q ∧ Odd q ∧ q ∣ n) ∨ (∃ m, n = 2^m) := by
   have nnezero: n ≠ 0 := by linarith
   have ngt1 : 1 < n := by linarith
   by_cases h : ∃ p ∈ Nat.primeFactors n, Odd p
   · left
     rcases h with ⟨q, qprimefac , qodd⟩
     rw [Nat.mem_primeFactors] at qprimefac
-    rcases qprimefac with ⟨qprime, qdvdn, neqzero⟩
-    exact ⟨q, qodd, qdvdn⟩
+    rcases qprimefac with ⟨qprime, qdvdn, _neqzero⟩
+    exact ⟨q, Prime.two_le qprime, qodd, qdvdn⟩
   · right
     push_neg at h
     simp only [← Nat.even_iff_not_odd] at h
@@ -316,21 +316,23 @@ lemma exists_odd_factor_or_is_power_of_two (hn : 2 ≤ n): (∃ q, Odd q ∧ q �
       · intro hr
         rw [mem_singleton]
         exact h' _ hr
-    -- apply factorization_prod_pow_eq_self
-    rcases n.factorization with ⟨prime_factors, multiplicity, h'⟩
-    use multiplicity 2
-    rw [← factorization_prod_pow_eq_self nnezero]
-    -- rw [Finsupp.onFinset_prod]
-    sorry
-
-    -- Nat.mem_primeFactors_of_ne_zero nnezero
-    -- []
-    -- rcases exists_prime_factor hn with ⟨q, hq⟩
-    -- have : Even q := by apply h _ hq
+    use padicValNat 2 n
+    nth_rewrite 1 [
+      ← factorization_prod_pow_eq_self nnezero,
+      prod_factorization_eq_prod_primeFactors,
+      ← factorseq2,
+      prod_singleton,
+      pow_right_inj (by norm_num) (by norm_num),
+      factorization_def
+      ]
+    rfl
+    exact prime_two
 
 theorem question_8 (hn : 2 ≤ n)(hprime : Nat.Prime (2^n + 1)) : ∃ m : ℕ, n = 2^m := by
   cases exists_odd_factor_or_is_power_of_two hn
-  case inl h => sorry
-    -- rcases h with ⟨q, qodd, qdvdn⟩
-    -- have pnotprime : ¬ (Nat.Prime 2^n + 1) := by
+  case inl h =>
+    rcases h with ⟨q, hq, qodd, qdvdn⟩
+    have notqdvdn : ¬ (q ∣ n) := by
+      apply question_7 hn hq hprime qodd
+    contradiction
   case inr h => exact h
